@@ -10,6 +10,7 @@ defmodule ExMiniRedis.Application do
     children = [
       # Starts a worker by calling: ExMiniRedis.Worker.start_link(arg)
       # {ExMiniRedis.Worker, arg}
+      ExMiniRedis.KV,
       {Task.Supervisor, name: ExMiniRedis.TaskSupervisor},
       {Task, fn -> ExMiniRedis.TcpServer.accept(String.to_integer(System.get_env("PORT") || "5000")) end}
     ]
