@@ -3,7 +3,7 @@ defmodule ExMiniRedis.TcpServer do
 
   def accept(port) do
     {:ok, socket} =
-      :gen_tcp.listen(port, [:binary, active: false, packet: :line, reuseaddr: true])
+      :gen_tcp.listen(port, [:binary, active: false, backlog: 50, packet: :line, reuseaddr: true])
 
     Logger.info("Accepting connection at port #{port}...")
     loop_acceptor(socket)
@@ -22,21 +22,52 @@ defmodule ExMiniRedis.TcpServer do
     loop_acceptor(socket)
   end
 
-  defp serve(socket) do
-    socket
-    |> read_line()
-    |> write_line(socket)
 
-    serve(socket)
+  defp serve(client) do
+    parse_command(client, "")
   end
 
-  defp read_line(socket) do
-    {:ok, data} = :gen_tcp.recv(socket, 0)
-    data
+  defp parse_command(client, state) do
+    case :gen_tcp.recv(client, 0) do
+      {:ok, data} ->
+        new_state = state <> data
+        case ExMiniRedis.RESPParser.decode(new_state) do
+          {:error, _} -> parse_command(client, new_state)
+          {:ok, commands} ->
+            handle_command(client, commands)
+            serve(client)
+        end
+
+      _ ->
+        serve(client)
+    end
   end
 
-  defp write_line(line, socket) do
-    :gen_tcp.send(socket, line)
+  defp handle_command(client, commands) do
+    case commands do
+      [_, "GET", "CONFIG"] ->
+        :gen_tcp.send(client, "+OK\r\n")
+
+      [_, "SET", "CONFIG"] ->
+        :gen_tcp.send(client, "+OK\r\n")
+
+      [value, key, "SET"] ->
+        ExMiniRedis.KV.set(key, value)
+        :gen_tcp.send(client, "+OK\r\n")
+
+      [key, "GET"] ->
+        case ExMiniRedis.KV.get(key) do
+          {:ok, value} ->
+            :gen_tcp.send(client, "+#{value}\r\n")
+
+          {:error, :not_found} ->
+            :gen_tcp.send(client, "+(nil)\r\n")
+        end
+
+      _ ->
+        :ignore
+    end
   end
+
 end
 

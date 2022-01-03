@@ -28,4 +28,21 @@ defmodule ExMiniRedis.RESPParserTest do
 
     assert input == correct_input
   end
+
+  test "Decoding partial input" do
+    input = "*2\r\n"
+    assert {:error, :incomplete_command} = ExMiniRedis.RESPParser.decode(input)
+
+    input = "*2\r\n$3\r\nGET\r\n"
+    assert {:error, :incomplete_command} = ExMiniRedis.RESPParser.decode(input)
+
+    input = "*2\r\n$3\r\nGET\r\n$3\r\n"
+    assert {:error, :incomplete_command} = ExMiniRedis.RESPParser.decode(input)
+
+    input = "*2\r\n$3\r\nGET\r\n$3\r\nkey\r\n"
+    assert {:ok, ["GET", "key"]} = ExMiniRedis.RESPParser.decode(input)
+
+    input =  "*3\r\n$6\r\nCONFIG\r\n$3\r\nGET\r\n$4\r\nsave\r\n"
+    assert {:ok, ["CONFIG", "GET", "save"]} = ExMiniRedis.RESPParser.decode(input)
+  end
 end

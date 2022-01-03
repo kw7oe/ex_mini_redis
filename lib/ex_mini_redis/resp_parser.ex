@@ -8,7 +8,7 @@ defmodule ExMiniRedis.RESPParser do
   end
 
   def decode(string) when is_binary(string) do
-    %{commands: commands} =
+    result =
       string
       |> String.trim()
       |> String.split("\r\n")
@@ -30,6 +30,17 @@ defmodule ExMiniRedis.RESPParser do
         end
       end)
 
-    Enum.reverse(commands)
+    case result do
+      %{array_length: n, commands: commands} ->
+       if Enum.count(commands) == n do
+         {:ok, commands}
+        else
+          {:error, :incomplete_command}
+        end
+      %{type: _} ->
+          {:error, :incomplete_command}
+
+      _ -> {:error, :invalid}
+    end
   end
 end
