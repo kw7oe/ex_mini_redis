@@ -1,21 +1,13 @@
-# ExMiniRedis
+# Mini Redis
 
-**TODO: Add description**
+Minimal Redis server implemented in Elixir. Inspired by [Tokio Mini Redis
+Tutorial][0].
 
-## Installation
+Currently only support simple `get` and `set` commands.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `ex_mini_redis` to your list of dependencies in `mix.exs`:
+## Blog Posts
 
-```elixir
-def deps do
-  [
-    {:ex_mini_redis, "~> 0.1.0"}
-  ]
-end
-```
+- [Writing a simple Redis Protocol parser in Elixir][1]
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/ex_mini_redis>.
-
+[0]: https://tokio.rs/tokio/tutorial/setup
+[1]: https://kaiwern.com/posts/2022/01/04/writing-a-simple-redis-protocol-parser-in-elixir/
