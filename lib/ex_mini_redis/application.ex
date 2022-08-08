@@ -11,8 +11,10 @@ defmodule ExMiniRedis.Application do
       # Starts a worker by calling: ExMiniRedis.Worker.start_link(arg)
       # {ExMiniRedis.Worker, arg}
       ExMiniRedis.KV,
+      {ExMiniRedis.ListenerSupervisor, {}},
       {Task.Supervisor, name: ExMiniRedis.TaskSupervisor},
-      {Task, fn -> ExMiniRedis.TcpServer.accept(String.to_integer(System.get_env("PORT") || "5000")) end}
+      {Task,
+       fn -> ExMiniRedis.TcpServer.accept(String.to_integer(System.get_env("PORT") || "5000")) end}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
