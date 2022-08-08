@@ -18,10 +18,9 @@ defmodule ExMiniRedis.TcpServer do
       end)
 
     Logger.info("Serving new client with pid: #{inspect(pid)}...")
-    :ok = :gen_tcp.controlling_process(client, pid)
+    :gen_tcp.controlling_process(client, pid)
     loop_acceptor(socket)
   end
-
 
   defp serve(client) do
     parse_command(client, "")
@@ -31,15 +30,22 @@ defmodule ExMiniRedis.TcpServer do
     case :gen_tcp.recv(client, 0) do
       {:ok, data} ->
         new_state = state <> data
+
         case ExMiniRedis.RESPParser.decode(new_state) do
-          {:error, _} -> parse_command(client, new_state)
+          {:error, _} ->
+            parse_command(client, new_state)
+
           {:ok, commands} ->
             handle_command(client, commands)
             serve(client)
         end
 
-      _ ->
-        serve(client)
+      {:error, reason} ->
+        if reason != :closed do
+          {:error, :closed}
+        else
+          serve(client)
+        end
     end
   end
 
@@ -68,6 +74,4 @@ defmodule ExMiniRedis.TcpServer do
         :ignore
     end
   end
-
 end
-
